@@ -1,0 +1,24 @@
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Config & validation (use latest with wheels)
+pydantic==2.10.6
+pydantic-settings==2.7.1
+
+# Google Gemini
+google-genai>=0.3.0
+
+# Firebase Admin SDK
+firebase-admin==6.7.0
+
+# Security (skip cryptography compilation)
+python-jose==3.3.0
+passlib==1.7.4
+
+# HTTP
+httpx==0.28.1
+
+# Dev only
+pytest==8.3.4
+pytest-asyncio==0.24.0

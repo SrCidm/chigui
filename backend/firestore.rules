@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function — user must be authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function — user can only access their own data
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Users collection — users can only read/write their own document
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Conversations — users can only access their own conversations
+    match /conversations/{userId}/messages/{messageId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Progress tracking — users can only see their own progress
+    match /progress/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Achievements — users can only modify their own
+    match /achievements/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Public lessons — everyone can read, but only admins can write
+    match /lessons/{lessonId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only backend can write via Admin SDK
+    }
+    
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
