@@ -1,11 +1,9 @@
 services:
   - type: web
     name: chigui-api
-    runtime: python
+    runtime: python-3.11
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: APP_ENV
         value: production
