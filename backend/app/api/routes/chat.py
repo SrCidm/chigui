@@ -1,48 +1,72 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from typing import List, Optional
+import logging
 from app.core.security import get_current_user
-from app.services.gemini import generate_response
+from app.services.gemini import get_gemini_response
 
 router = APIRouter()
-
+logger = logging.getLogger(__name__)
 
 class Message(BaseModel):
-    role: str       # "user" or "model"
+    role: str
     text: str
-
+    image: Optional[str] = None  # Base64 image data
 
 class ChatRequest(BaseModel):
-    messages: list[Message]
-    level: str = "beginner"     # beginner | intermediate | advanced
+    messages: List[Message]
+    level: str = "beginner"
 
-
-class ChatResponse(BaseModel):
-    reply: str
-
-
-@router.post("", response_model=ChatResponse)
-async def chat(
-    body: ChatRequest,
-    current_user: dict = Depends(get_current_user),
+@router.post("/chat")
+async def chat_endpoint(
+    request: ChatRequest,
+    current_user: dict = Depends(get_current_user)
 ):
     """
-    Proxies the conversation to Gemini API.
-    The API key is NEVER sent to the frontend — it lives only here.
+    Chat with Chigui AI - Supports text and images
     """
-    if not body.messages:
-        raise HTTPException(status_code=400, detail="Messages array cannot be empty.")
+    try:
+        # Convert messages to Gemini format
+        gemini_messages = []
+        
+        for msg in request.messages:
+            if msg.image:
+                # Message with image (Gemini Vision)
+                # Extract base64 data (remove data:image/jpeg;base64, prefix if present)
+                image_data = msg.image
+                if "," in image_data:
+                    image_data = image_data.split(",")[1]
+                
+                gemini_messages.append({
+                    "role": msg.role,
+                    "parts": [
+                        {"text": msg.text},
+                        {
+                            "inline_data": {
+                                "mime_type": "image/jpeg",
+                                "data": image_data
+                            }
+                        }
+                    ]
+                })
+            else:
+                # Text-only message
+                gemini_messages.append({
+                    "role": msg.role,
+                    "parts": [{"text": msg.text}]
+                })
+        
+        # Get response from Gemini
+        response = await get_gemini_response(gemini_messages, request.level)
+        
+        return {"reply": response}
+    
+    except Exception as e:
+        logger.error(f"Chat error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-    # Convert to Gemini format
-    history = [
-        {"role": msg.role, "parts": [{"text": msg.text}]}
-        for msg in body.messages
-    ]
 
-    reply = await generate_response(
-        messages=history,
-        user_level=body.level,
-    )
-
-    # TODO: Persist conversation to Firestore (user_id = current_user["uid"])
-
-    return ChatResponse(reply=reply)
+@router.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "ok", "service": "chigui-chat"}

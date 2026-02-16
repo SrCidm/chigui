@@ -2,25 +2,20 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-// Tipos
-export type Theme = "dark" | "light" | "auto";
-export type Dialect = "spain" | "mexico" | "neutral";
-export type UserLanguage = "en" | "fr" | "de" | "pt" | "it" | "zh" | "ja" | "ar" | "auto";
-
-interface AppSettings {
-  theme: Theme;
-  dialect: Dialect;
-  userLanguage: UserLanguage;
+interface Settings {
+  theme: "dark" | "light" | "auto";
+  dialect: "spain" | "mexico" | "neutral";
+  userLanguage: string;
   voiceEnabled: boolean;
   autoPlayTTS: boolean;
 }
 
 interface AppContextType {
-  settings: AppSettings;
-  updateSettings: (partial: Partial<AppSettings>) => void;
+  settings: Settings;
+  updateSettings: (newSettings: Partial<Settings>) => void;
 }
 
-const defaultSettings: AppSettings = {
+const defaultSettings: Settings = {
   theme: "dark",
   dialect: "neutral",
   userLanguage: "auto",
@@ -28,37 +23,71 @@ const defaultSettings: AppSettings = {
   autoPlayTTS: false,
 };
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+const AppContext = createContext<AppContextType>({
+  settings: defaultSettings,
+  updateSettings: () => {},
+});
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [mounted, setMounted] = useState(false);
 
   // Load settings from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("chigui_settings");
     if (saved) {
       try {
-        setSettings({ ...defaultSettings, ...JSON.parse(saved) });
+        setSettings(JSON.parse(saved));
       } catch (e) {
         console.error("Failed to load settings:", e);
       }
     }
+    setMounted(true);
   }, []);
+
+  // Apply theme to document
+  useEffect(() => {
+    if (!mounted) return;
+
+    const root = document.documentElement;
+    
+    if (settings.theme === "auto") {
+      // Detect system preference
+      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (isDark) {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
+      }
+      
+      // Listen for system theme changes
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handleChange = (e: MediaQueryListEvent) => {
+        if (e.matches) {
+          root.classList.add("dark");
+        } else {
+          root.classList.remove("dark");
+        }
+      };
+      
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    } else if (settings.theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [settings.theme, mounted]);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("chigui_settings", JSON.stringify(settings));
-    
-    // Apply theme to document
-    if (settings.theme === "dark" || (settings.theme === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
+    if (mounted) {
+      localStorage.setItem("chigui_settings", JSON.stringify(settings));
     }
-  }, [settings]);
+  }, [settings, mounted]);
 
-  const updateSettings = (partial: Partial<AppSettings>) => {
-    setSettings((prev) => ({ ...prev, ...partial }));
+  const updateSettings = (newSettings: Partial<Settings>) => {
+    setSettings((prev) => ({ ...prev, ...newSettings }));
   };
 
   return (

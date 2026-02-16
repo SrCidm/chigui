@@ -5,11 +5,36 @@ import { useState, useRef } from "react";
 export function useCamera() {
   const [capturing, setCapturing] = useState(false);
   const [image, setImage] = useState<string | null>(null);
+  const [showOptions, setShowOptions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Open camera/gallery
-  const openCamera = () => {
-    fileInputRef.current?.click();
+  // Show camera options modal
+  const openCameraOptions = () => {
+    setShowOptions(true);
+  };
+
+  // Close options
+  const closeOptions = () => {
+    setShowOptions(false);
+  };
+
+  // Open camera (take photo) - FIXED
+  const takePhoto = () => {
+    setShowOptions(false);
+    // Trigger camera input
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    }
+  };
+
+  // Open gallery (choose from files)
+  const chooseFromGallery = () => {
+    setShowOptions(false);
+    // Trigger file input
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   // Handle file selection
@@ -51,14 +76,22 @@ export function useCamera() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
   };
 
   return {
     capturing,
     image,
-    openCamera,
+    showOptions,
+    openCameraOptions,
+    closeOptions,
+    takePhoto,
+    chooseFromGallery,
     clearImage,
     fileInputRef,
+    cameraInputRef,
     handleFileChange,
   };
 }

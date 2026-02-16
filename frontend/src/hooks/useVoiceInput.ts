@@ -12,10 +12,10 @@ export function useVoiceInput() {
 
   // Check if speech recognition is supported (client-side only)
   useEffect(() => {
-    const isSupported = typeof window !== "undefined" && (
-      "webkitSpeechRecognition" in window || "SpeechRecognition" in window
+    setSupported(
+      typeof window !== "undefined" &&
+      ("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
     );
-    setSupported(isSupported);
   }, []);
 
   // Initialize recognition

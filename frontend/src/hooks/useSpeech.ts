@@ -15,6 +15,7 @@ export function useSpeech() {
   const [speaking, setSpeaking] = useState(false);
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1.0);
+  const [currentText, setCurrentText] = useState("");
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Load available voices
@@ -43,7 +44,6 @@ export function useSpeech() {
   const getVoice = useCallback(() => {
     if (voices.length === 0) return null;
 
-    // Dialect preferences
     const dialectMap = {
       spain: ["es-ES"],
       mexico: ["es-MX", "es-US"],
@@ -51,61 +51,72 @@ export function useSpeech() {
     };
 
     const preferredLangs = dialectMap[settings.dialect];
-
-    // Find MALE voice (prefer names with "Male", "Jorge", "Diego", etc.)
     const maleKeywords = ["male", "jorge", "diego", "juan", "carlos", "miguel", "hombre", "masculino"];
     
     for (const lang of preferredLangs) {
-      // Try to find male voice first
       const maleVoice = voices.find((v) => 
         v.lang.startsWith(lang) && 
         maleKeywords.some(keyword => v.name.toLowerCase().includes(keyword))
       );
       if (maleVoice) return maleVoice.voice;
       
-      // Fallback to any voice from that region
       const anyVoice = voices.find((v) => v.lang.startsWith(lang));
       if (anyVoice) return anyVoice.voice;
     }
 
-    // Last resort: any Spanish voice
     return voices[0]?.voice || null;
   }, [voices, settings.dialect]);
 
-  // Speak text
-  const speak = useCallback(
-    (text: string) => {
-      if (!settings.voiceEnabled) return;
+  // Internal function to actually speak
+  const speakWithSpeed = useCallback((text: string, currentSpeed: number) => {
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    setSpeaking(false);
+    setPaused(false);
 
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
-      setPaused(false);
-
+    // Small delay to ensure cancel completes
+    setTimeout(() => {
       const utterance = new SpeechSynthesisUtterance(text);
       const voice = getVoice();
       if (voice) {
         utterance.voice = voice;
       }
       utterance.lang = "es";
-      utterance.rate = speed;
-      utterance.pitch = 0.9; // Slightly lower pitch for more masculine sound
+      utterance.rate = currentSpeed;
+      utterance.pitch = 0.9;
 
-      utterance.onstart = () => setSpeaking(true);
+      utterance.onstart = () => {
+        setSpeaking(true);
+        setCurrentText(text);
+      };
+      
       utterance.onend = () => {
         setSpeaking(false);
         setPaused(false);
+        setCurrentText("");
       };
+      
       utterance.onerror = () => {
         setSpeaking(false);
         setPaused(false);
+        setCurrentText("");
       };
+      
       utterance.onpause = () => setPaused(true);
       utterance.onresume = () => setPaused(false);
 
       utteranceRef.current = utterance;
       window.speechSynthesis.speak(utterance);
+    }, 50);
+  }, [getVoice]);
+
+  // Public speak function
+  const speak = useCallback(
+    (text: string) => {
+      if (!settings.voiceEnabled) return;
+      speakWithSpeed(text, speed);
     },
-    [settings.voiceEnabled, getVoice, speed]
+    [settings.voiceEnabled, speed, speakWithSpeed]
   );
 
   // Pause speaking
@@ -129,18 +140,20 @@ export function useSpeech() {
     window.speechSynthesis.cancel();
     setSpeaking(false);
     setPaused(false);
+    setCurrentText("");
   }, []);
 
-  // Change speed
+  // Change speed - THIS IS THE KEY FIX
   const changeSpeed = useCallback((newSpeed: number) => {
+    console.log(`[useSpeech] Changing speed from ${speed} to ${newSpeed}`);
     setSpeed(newSpeed);
+    
     // If currently speaking, restart with new speed
-    if (speaking && utteranceRef.current) {
-      const currentText = utteranceRef.current.text;
-      stop();
-      setTimeout(() => speak(currentText), 100);
+    if (speaking && currentText) {
+      console.log(`[useSpeech] Restarting audio with new speed: ${newSpeed}`);
+      speakWithSpeed(currentText, newSpeed);
     }
-  }, [speaking, stop, speak]);
+  }, [speaking, currentText, speed, speakWithSpeed]);
 
   return { 
     speak, 

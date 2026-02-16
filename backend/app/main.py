@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 # Routers
-app.include_router(chat.router,         prefix="/api/chat",         tags=["Chat"])
+app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(users.router,        prefix="/api/users",        tags=["Users"])
 app.include_router(progress.router,     prefix="/api/progress",     tags=["Progress"])
 app.include_router(achievements.router, prefix="/api/achievements", tags=["Achievements"])
