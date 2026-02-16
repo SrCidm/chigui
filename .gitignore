@@ -27,6 +27,7 @@ frontend/public/sw.js
 frontend/public/workbox-*.js
 frontend/public/sw.js.map
 
+
 # ─── OS ────────────────────────────────────
 .DS_Store
 Thumbs.db
@@ -35,3 +36,4 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+.firebase/
