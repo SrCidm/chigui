@@ -407,7 +407,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Sergio Cid** — Full Stack Developer
 
-- Portfolio: [sergiocid.dev](#)
+- Portfolio: [sergiocid.dev](https://srcidm.netlify.app)
 - GitHub: [@Sergio Cid](https://github.com/srcidm)
 - LinkedIn: [Sergio Cid](https://linkedin.com/in/srcidm)
 
@@ -415,9 +415,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🌟 Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=srcidm/chigui&type=Date)](https://star-history.com/#srcidm/chigui&Date)
 
 ---
 
