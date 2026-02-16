@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey:     process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
@@ -26,7 +26,7 @@ export async function getIdToken(): Promise<string | null> {
 }
 
 export async function signInWithGoogle() {
-  return signInWithPopup(auth, googleProvider);
+  return signInWithRedirect(auth, googleProvider);
 }
 
 export async function logout() {

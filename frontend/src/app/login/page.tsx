@@ -1,14 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { signInWithGoogle } from "@/lib/firebase";
+import { useState, useEffect } from "react";
+import { signInWithGoogle, auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import { getRedirectResult } from "firebase/auth";
 import Image from "next/image";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          router.push("/chat");
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to sign in");
+      }
+    };
+    checkRedirectResult();
+  }, [router]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
