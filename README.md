@@ -92,7 +92,7 @@ Chigui is a **conversational AI language tutor** that helps people worldwide lea
 
 ## 🚀 Roadmap
 
-### **Phase 2: Advanced Voice & Vision** 🎙️📸 (Q2 2025)
+### **Phase 2: Advanced Voice & Vision** 🎙️📸
 
 #### **Voice Features**
 - [ ] **Continuous Voice Mode** - Hands-free conversation flow
@@ -106,7 +106,7 @@ Chigui is a **conversational AI language tutor** that helps people worldwide lea
 - [ ] **OCR Support** - Extract and translate text from images
 - [ ] **Visual Context** - Learn vocabulary from real-world objects
 
-### **Phase 3: Gamification & Learning** 🎮 (Q3 2025)
+### **Phase 3: Gamification & Learning** 🎮
 
 #### **Gamification System**
 - [ ] **Daily Missions** - "Have a 5-minute conversation", "Learn 10 food words"
@@ -121,7 +121,7 @@ Chigui is a **conversational AI language tutor** that helps people worldwide lea
 - [ ] **Grammar Drills** - Interactive exercises
 - [ ] **Pronunciation Practice** - Targeted accent training
 
-### **Phase 4: Advanced AI** 🧠 (Q4 2025)
+### **Phase 4: Advanced AI** 🧠 
 
 - [ ] **Conversation Memory** - Chigui remembers past topics
 - [ ] **Personalized Curriculum** - AI adapts to your weaknesses
@@ -129,7 +129,7 @@ Chigui is a **conversational AI language tutor** that helps people worldwide lea
 - [ ] **Contextual Corrections** - "In Spain ___, in Mexico ___, in Argentina ___"
 - [ ] **Cultural Insights** - Learn slang, customs, expressions
 
-### **Phase 5: Productivity & Export** 📊 (Q1 2026)
+### **Phase 5: Productivity & Export** 📊
 
 - [ ] **Progress Dashboard** - Vocabulary learned, hours practiced
 - [ ] **Export to PDF** - Download conversations
@@ -137,7 +137,7 @@ Chigui is a **conversational AI language tutor** that helps people worldwide lea
 - [ ] **Study Recommendations** - "Focus on subjunctive this week"
 - [ ] **Custom Study Plans** - Tailored learning paths
 
-### **Phase 6: Social & Community** 👥 (Q2 2026)
+### **Phase 6: Social & Community** 👥
 
 - [ ] **Language Exchange** - Match with native speakers
 - [ ] **Group Challenges** - Team-based goals
