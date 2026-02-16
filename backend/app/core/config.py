@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import List
+import json
+import os
 
 
 class Settings(BaseSettings):
@@ -16,11 +18,21 @@ class Settings(BaseSettings):
     FIREBASE_PRIVATE_KEY: str              # Required
     FIREBASE_CLIENT_EMAIL: str             # Required
 
-    # CORS
-    ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",            # Next.js dev
-        "https://chigui.app",              # Production
-    ]
+    # CORS - Parse from env or use defaults
+    @property
+    def ALLOWED_ORIGINS(self) -> List[str]:
+        origins_env = os.getenv("ALLOWED_ORIGINS", "")
+        if origins_env:
+            try:
+                # Try JSON format: ["url1", "url2"]
+                return json.loads(origins_env)
+            except json.JSONDecodeError:
+                # Try comma-separated: url1,url2
+                return [origin.strip() for origin in origins_env.split(",")]
+        return [
+            "http://localhost:3000",            # Next.js dev
+            "https://chigui.app",              # Production
+        ]
 
     # Misc
     MAX_TOKENS: int = 2048
