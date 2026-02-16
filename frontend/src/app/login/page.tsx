@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { signInWithGoogle, auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
-import { getRedirectResult } from "firebase/auth";
+import { getRedirectResult, onAuthStateChanged } from "firebase/auth";
 import Image from "next/image";
 
 export default function LoginPage() {
@@ -12,6 +12,14 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Detectar sesión activa (persistencia entre navegaciones)
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push("/chat");
+      }
+    });
+
+    // También verificar resultado de redirect
     const checkRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
@@ -19,10 +27,13 @@ export default function LoginPage() {
           router.push("/chat");
         }
       } catch (err: any) {
+        console.error("Redirect result error:", err);
         setError(err.message || "Failed to sign in");
       }
     };
     checkRedirectResult();
+
+    return () => unsubscribe();
   }, [router]);
 
   const handleGoogleLogin = async () => {
