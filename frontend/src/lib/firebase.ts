@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut } from "fireba
 
 const firebaseConfig = {
   apiKey:     process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-  authDomain: "chigui-app.vercel.app",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
   projectId:  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
   appId:      process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
