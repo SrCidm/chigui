@@ -1,56 +1,77 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { signInWithGoogle, auth } from "@/lib/firebase";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getRedirectResult, onAuthStateChanged } from "firebase/auth";
+import { auth, signInWithGoogle } from "@/lib/firebase";
+import { onAuthStateChanged, getRedirectResult } from "firebase/auth";
 import Image from "next/image";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const processedRef = useRef(false);
 
-  useEffect(() => {
-    console.log("[Login] Checking auth state...");
-    
-    // Detectar sesión activa (persistencia entre navegaciones)
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log("[Login] Auth state changed:", user ? "LOGGED IN" : "NOT LOGGED IN");
-      if (user) {
-        console.log("[Login] Redirecting to /chat...");
-        router.push("/chat");
+    useEffect(() => {
+      console.log("[LOGIN] Page loaded");
+
+      // Only check redirect in production
+      const isLocalhost = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1';
+
+      if (!isLocalhost) {
+        // Check redirect result (solo en producción)
+        const checkRedirect = async () => {
+          if (processedRef.current) return;
+          
+          try {
+            console.log("[LOGIN] Checking redirect result...");
+            const result = await getRedirectResult(auth);
+            
+            if (result?.user) {
+              console.log("[LOGIN] ✅ Redirect successful! User:", result.user.email);
+              processedRef.current = true;
+              router.push("/chat");
+            } else {
+              console.log("[LOGIN] No redirect result");
+            }
+          } catch (err: any) {
+            console.error("[LOGIN] ❌ Redirect error:", err);
+            setError(err.message || "Failed to sign in");
+          }
+        };
+        checkRedirect();
       }
-    });
 
-    // También verificar resultado de redirect
-    const checkRedirectResult = async () => {
-      try {
-        console.log("[Login] Checking redirect result...");
-        const result = await getRedirectResult(auth);
-        console.log("[Login] Redirect result:", result ? "SUCCESS" : "NO RESULT");
-        if (result?.user) {
-          console.log("[Login] Redirect successful, going to /chat");
+      // Check if already logged in
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (processedRef.current) return;
+        
+        console.log("[LOGIN] Auth state:", user ? `✅ ${user.email}` : "❌ Not logged in");
+        
+        if (user) {
+          processedRef.current = true;
           router.push("/chat");
         }
-      } catch (err: any) {
-        console.error("[Login] Redirect result error:", err);
-        setError(err.message || "Failed to sign in");
-      }
-    };
-    checkRedirectResult();
+      });
 
-    return () => unsubscribe();
-  }, [router]);
+      return () => {
+        console.log("[LOGIN] Cleanup");
+        unsubscribe();
+      };
+    }, [router]);
 
   const handleGoogleLogin = async () => {
+    console.log("[LOGIN] Button clicked");
     setLoading(true);
     setError("");
     
     try {
+      console.log("[LOGIN] Calling signInWithGoogle...");
       await signInWithGoogle();
-      router.push("/chat");
+      console.log("[LOGIN] Redirect initiated (page will reload)");
     } catch (err: any) {
+      console.error("[LOGIN] ❌ Login error:", err);
       setError(err.message || "Failed to sign in");
       setLoading(false);
     }
@@ -59,35 +80,23 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-br from-gray-900 via-gray-800 to-orange-900">
       <div className="max-w-md w-full bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-700">
-        {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="relative w-32 h-32">
-            <Image
-              src="/logo.jpg"
-              alt="Chigui Logo"
-              fill
-              className="rounded-full object-cover"
-              priority
-            />
+            <Image src="/logo.jpg" alt="Chigui Logo" fill className="rounded-full object-cover" priority />
           </div>
         </div>
 
-        {/* Title */}
         <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
           Chigui
         </h1>
-        <p className="text-center text-gray-400 mb-8">
-          Learn Spanish naturally with AI
-        </p>
+        <p className="text-center text-gray-400 mb-8">Learn Spanish naturally with AI</p>
 
-        {/* Error */}
         {error && (
           <div className="mb-4 p-3 bg-red-500/10 border border-red-500 rounded-lg text-red-400 text-sm">
             {error}
           </div>
         )}
 
-        {/* Google Sign-In Button */}
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
@@ -98,22 +107,10 @@ export default function LoginPage() {
           ) : (
             <>
               <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
               Continue with Google
             </>
