@@ -12,9 +12,13 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log("[Login] Checking auth state...");
+    
     // Detectar sesión activa (persistencia entre navegaciones)
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("[Login] Auth state changed:", user ? "LOGGED IN" : "NOT LOGGED IN");
       if (user) {
+        console.log("[Login] Redirecting to /chat...");
         router.push("/chat");
       }
     });
@@ -22,12 +26,15 @@ export default function LoginPage() {
     // También verificar resultado de redirect
     const checkRedirectResult = async () => {
       try {
+        console.log("[Login] Checking redirect result...");
         const result = await getRedirectResult(auth);
+        console.log("[Login] Redirect result:", result ? "SUCCESS" : "NO RESULT");
         if (result?.user) {
+          console.log("[Login] Redirect successful, going to /chat");
           router.push("/chat");
         }
       } catch (err: any) {
-        console.error("Redirect result error:", err);
+        console.error("[Login] Redirect result error:", err);
         setError(err.message || "Failed to sign in");
       }
     };

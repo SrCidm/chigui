@@ -11,6 +11,8 @@ import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useCamera } from "@/hooks/useCamera";
 import { useApp } from "@/contexts/AppContext";
 import AudioControls from "@/components/AudioControls";
+import ProfileMenu from "@/components/ProfileMenu";
+import { useTypingEffect } from "@/hooks/useTypingEffect";
 
 const STORAGE_KEY = "chigui_chat_history";
 
@@ -20,11 +22,13 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [lastAiMessage, setLastAiMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   
   // Hooks
   const { speak, speaking } = useSpeech();
+  const { displayedText, isTyping } = useTypingEffect(lastAiMessage, 20);
   const { listening, transcript, startListening, stopListening, clearTranscript, supported: voiceSupported } = useVoiceInput();
   const { 
     image, 
@@ -111,13 +115,20 @@ export default function ChatPage() {
     try {
       // Send ENTIRE history to AI for context/memory
       const reply = await sendChatMessage(updatedMessages, "beginner");
-      const aiMessage: Message = { role: "model", text: reply };
-      setMessages((prev) => [...prev, aiMessage]);
       
-      // Auto-play TTS if enabled
-      if (settings.autoPlayTTS && settings.voiceEnabled) {
-        speak(reply);
-      }
+      // Trigger typing effect
+      setLastAiMessage(reply);
+      
+      setTimeout(() => {
+        const aiMessage: Message = { role: "model", text: reply };
+        setMessages((prev) => [...prev, aiMessage]);
+        setLastAiMessage(""); // Clear after adding
+        
+        // Auto-play TTS if enabled
+        if (settings.autoPlayTTS && settings.voiceEnabled) {
+          speak(reply);
+        }
+      }, reply.length * 20 + 100); // Wait for typing to finish
     } catch (error: any) {
       console.error("Chat error:", error);
       const errorMessage: Message = {
@@ -193,16 +204,7 @@ export default function ChatPage() {
             </button>
           )}
 
-          {user?.photoURL && (
-            <div className="relative w-7 h-7 sm:w-8 sm:h-8">
-              <Image
-                src={user.photoURL}
-                alt={user.displayName || "User"}
-                fill
-                className="rounded-full object-cover"
-              />
-            </div>
-          )}
+          {user && <ProfileMenu user={user} />}
           
           <button
             onClick={() => router.push("/settings")}
@@ -256,7 +258,17 @@ export default function ChatPage() {
                 />
               )}
               
-              <p className="whitespace-pre-wrap text-sm sm:text-base">{msg.text}</p>
+              {/* Mostrar texto con typing effect si es el último mensaje de IA */}
+              <p className="whitespace-pre-wrap text-sm sm:text-base">
+                {msg.role === "model" && idx === messages.length - 1 && lastAiMessage
+                  ? displayedText
+                  : msg.text}
+              </p>
+              
+              {/* Cursor parpadeante mientras escribe */}
+              {msg.role === "model" && idx === messages.length - 1 && isTyping && (
+                <span className="inline-block w-2 h-4 bg-orange-400 ml-1 animate-pulse" />
+              )}
               
               {msg.role === "model" && settings.voiceEnabled && (
                 <button
@@ -273,6 +285,18 @@ export default function ChatPage() {
             </div>
           </div>
         ))}
+
+        {/* Mensaje temporal mientras espera respuesta */}
+        {lastAiMessage && !messages.some(m => m.text === lastAiMessage) && (
+          <div className="flex justify-start">
+            <div className="bg-gray-200 dark:bg-gray-800 px-3 sm:px-4 py-2 sm:py-3 rounded-2xl max-w-[85%]">
+              <p className="whitespace-pre-wrap text-sm sm:text-base text-gray-900 dark:text-gray-100">
+                {displayedText}
+                <span className="inline-block w-2 h-4 bg-orange-400 ml-1 animate-pulse" />
+              </p>
+            </div>
+          </div>
+        )}
 
         {sending && (
           <div className="flex justify-start">
